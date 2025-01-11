@@ -1,12 +1,14 @@
 from diffusers import StableDiffusionPipeline
+from accelerate import cpu_offload
 import torch
 from typing import Optional
 import os
 
 class ModelManager:
-    def __init__(self):
+    def __init__(self, enable_offload: bool = True):
         self.loaded_models = {}
         self.default_model = "stabilityai/stable-diffusion-2-1"
+        self.enable_offload = enable_offload
         
     async def get_pipeline(self, model_id: Optional[str] = None) -> StableDiffusionPipeline:
         model_id = model_id or self.default_model
@@ -18,7 +20,13 @@ class ModelManager:
             )
             
             if torch.cuda.is_available():
-                pipeline = pipeline.to("cuda")
+                if self.enable_offload:
+                    # Enable sequential CPU offloading
+                    pipeline.enable_sequential_cpu_offload()
+                    # Alternatively, for more fine-grained control:
+                    # pipeline.enable_model_cpu_offload()
+                else:
+                    pipeline = pipeline.to("cuda")
             
             self.loaded_models[model_id] = pipeline
             
