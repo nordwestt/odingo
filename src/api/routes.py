@@ -15,6 +15,7 @@ class ImageGenerationRequest(BaseModel):
     size: Optional[str] = "1024x1024"
     response_format: Optional[str] = "url"
     model: Optional[str] = None
+    steps: Optional[int] = 10
 
 class ImageResponse(BaseModel):
     created: int
@@ -36,13 +37,18 @@ async def create_image(request: ImageGenerationRequest):
     try:
         # Parse size
         width, height = map(int, request.size.split("x"))
+
+        # if no steps, set to 10
+        if request.steps is None:
+            request.steps = 10
         
         # Generate images
         images = await model_manager.generate_image(
             prompt=request.prompt,
             n=request.n,
             size=(width, height),
-            model_id=request.model
+            model_id=request.model,
+            steps=request.steps
         )
         
         # Convert images to response format

@@ -9,12 +9,18 @@ import datetime
 
 class ModelManager:
     def __init__(self, enable_offload: bool = True):
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if self.device == "cuda":
+            print(f"Using GPU: {torch.cuda.get_device_name()}")
+        else:
+            print("CUDA not available, using CPU")
+            
         self.models_dir = Path.home() / ".odingo" / "models"
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.models_info_path = self.models_dir / "models.json"
         self.loaded_models = {}
         self.default_model = "stable-diffusion-v1-5/stable-diffusion-v1-5"
-        self.enable_offload = enable_offload
+        self.enable_offload = False
         self._load_models_info()
     
     def _load_models_info(self):
@@ -76,6 +82,9 @@ class ModelManager:
         model_id = model_id or self.default_model
         
         if model_id not in self.loaded_models:
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            
             pipeline = DiffusionPipeline.from_pretrained(
                 model_id,
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
@@ -83,12 +92,9 @@ class ModelManager:
             
             if torch.cuda.is_available():
                 if self.enable_offload:
-                    # Enable sequential CPU offloading
-                    pipeline.enable_sequential_cpu_offload()
-                    # Alternatively, for more fine-grained control:
-                    # pipeline.enable_model_cpu_offload()
+                    pipeline.enable_model_cpu_offload()
                 else:
-                    pipeline = pipeline.to("cuda")
+                    pipeline = pipeline.to(self.device)
             
             self.loaded_models[model_id] = pipeline
             
@@ -98,6 +104,7 @@ class ModelManager:
         self,
         prompt: str,
         n: int = 1,
+        steps: int = 10,
         size: tuple = (512, 512),
         model_id: Optional[str] = None
     ):
@@ -108,7 +115,8 @@ class ModelManager:
             prompt,
             num_images_per_prompt=n,
             height=size[1],
-            width=size[0]
+            width=size[0],
+            num_inference_steps=steps,
         ).images
         
         return images 
