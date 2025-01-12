@@ -1,4 +1,4 @@
-from diffusers import StableDiffusionPipeline
+from diffusers import DiffusionPipeline
 from accelerate import cpu_offload
 import torch
 from typing import Optional, Dict, List
@@ -33,7 +33,7 @@ class ModelManager:
         """Install a model from Hugging Face Hub"""
         try:
             # Download the model
-            pipeline = StableDiffusionPipeline.from_pretrained(
+            pipeline = DiffusionPipeline.from_pretrained(
                 model_id,
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
             )
@@ -72,11 +72,11 @@ class ModelManager:
             for model_id, info in self.models_info.items()
         ]
     
-    async def get_pipeline(self, model_id: Optional[str] = None) -> StableDiffusionPipeline:
+    async def get_pipeline(self, model_id: Optional[str] = None) -> DiffusionPipeline:
         model_id = model_id or self.default_model
         
         if model_id not in self.loaded_models:
-            pipeline = StableDiffusionPipeline.from_pretrained(
+            pipeline = DiffusionPipeline.from_pretrained(
                 model_id,
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
             )
