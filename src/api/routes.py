@@ -5,9 +5,17 @@ from ..models.model_manager import ModelManager
 import base64
 import time
 from io import BytesIO
+from pathlib import Path
+import uuid
+import os
 
 router = APIRouter()
 model_manager = ModelManager()
+
+IMAGES_DIR = Path("static/images")
+IMAGES_URL_BASE = "http://localhost:8000/static/images"
+
+IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 class ImageGenerationRequest(BaseModel):
     prompt: str
@@ -60,9 +68,16 @@ async def create_image(request: ImageGenerationRequest):
                 img_str = base64.b64encode(buffered.getvalue()).decode()
                 response_data.append({"b64_json": img_str})
             else:
-                # In a real implementation, you'd save the image and create a URL
-                # For now, we'll just return a placeholder
-                response_data.append({"url": "http://localhost:8000/images/generated.png"})
+                # Generate a unique filename
+                filename = f"{uuid.uuid4()}.png"
+                filepath = IMAGES_DIR / filename
+                
+                # Save the image
+                img.save(filepath)
+                
+                # Create the public URL
+                image_url = f"{IMAGES_URL_BASE}/{filename}"
+                response_data.append({"url": image_url})
         
         return ImageResponse(
             created=int(time.time()),
