@@ -8,6 +8,7 @@ from io import BytesIO
 from pathlib import Path
 import uuid
 import os
+from datetime import datetime, timedelta
 
 router = APIRouter()
 model_manager = ModelManager()
@@ -16,6 +17,8 @@ IMAGES_DIR = Path("static/images")
 IMAGES_URL_BASE = "http://localhost:8000/static/images"
 
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+IMAGE_EXPIRY_MINUTES = 10
+
 
 class ImageGenerationRequest(BaseModel):
     prompt: str
@@ -40,9 +43,21 @@ class ModelResponse(BaseModel):
     installed_at: str
     status: str
 
+def cleanup_expired_images():
+    current_time = datetime.now()
+    for file in IMAGES_DIR.glob("*.png"):
+        # Get creation time and check if expired
+        creation_time = datetime.fromtimestamp(file.stat().st_ctime)
+        if current_time - creation_time > timedelta(minutes=IMAGE_EXPIRY_MINUTES):
+            try:
+                file.unlink()  # Delete the file
+            except Exception as e:
+                print(f"Failed to delete {file}: {e}")
+
 @router.post("/v1/images/generations", response_model=ImageResponse)
 async def create_image(request: ImageGenerationRequest):
     try:
+        cleanup_expired_images()
         # Parse size
         width, height = map(int, request.size.split("x"))
 
