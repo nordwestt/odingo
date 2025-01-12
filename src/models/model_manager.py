@@ -20,7 +20,7 @@ class ModelManager:
         self.models_info_path = self.models_dir / "models.json"
         self.loaded_models = {}
         self.default_model = "stable-diffusion-v1-5/stable-diffusion-v1-5"
-        self.enable_offload = False
+        self.enable_offload = enable_offload
         self._load_models_info()
     
     def _load_models_info(self):

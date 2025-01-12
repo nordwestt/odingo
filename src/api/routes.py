@@ -100,6 +100,8 @@ async def create_image(request: ImageGenerationRequest):
         )
     
     except Exception as e:
+        if(e.args[0].startswith("CUDA out of memory")):
+            raise HTTPException(status_code=500, detail="CUDA out of memory. Try reducing the number of images or steps.")
         raise HTTPException(status_code=500, detail=str(e)) 
 
 @router.post("/models/pull", response_model=ModelResponse)
