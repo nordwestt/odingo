@@ -19,6 +19,17 @@ class ImageResponse(BaseModel):
     created: int
     data: List[dict]
 
+class ModelInstallRequest(BaseModel):
+    name: Optional[str] = None
+    url: str
+
+class ModelResponse(BaseModel):
+    id: str
+    name: str
+    source: str
+    installed_at: str
+    status: str
+
 @router.post("/v1/images/generations", response_model=ImageResponse)
 async def create_image(request: ImageGenerationRequest):
     try:
@@ -53,3 +64,26 @@ async def create_image(request: ImageGenerationRequest):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 
+
+@router.post("/models/pull", response_model=ModelResponse)
+async def pull_model(request: ModelInstallRequest):
+    """Install a new model from Hugging Face Hub"""
+    try:
+        model_info = await model_manager.install_model(request.url, request.name)
+        return ModelResponse(id=request.url, **model_info)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/models/{model_id}")
+async def delete_model(model_id: str):
+    """Remove an installed model"""
+    success = await model_manager.remove_model(model_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Model not found")
+    return {"status": "success", "message": f"Model {model_id} removed"}
+
+@router.get("/models/list", response_model=List[ModelResponse])
+async def list_models():
+    """List all installed models"""
+    models = await model_manager.list_models()
+    return models 

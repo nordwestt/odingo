@@ -1,15 +1,77 @@
 from diffusers import StableDiffusionPipeline
 from accelerate import cpu_offload
 import torch
-from typing import Optional
+from typing import Optional, Dict, List
 import os
+import json
+from pathlib import Path
+import datetime
 
 class ModelManager:
     def __init__(self, enable_offload: bool = True):
+        self.models_dir = Path.home() / ".odingo" / "models"
+        self.models_dir.mkdir(parents=True, exist_ok=True)
+        self.models_info_path = self.models_dir / "models.json"
         self.loaded_models = {}
         self.default_model = "stabilityai/stable-diffusion-2-1"
         self.enable_offload = enable_offload
+        self._load_models_info()
+    
+    def _load_models_info(self):
+        if self.models_info_path.exists():
+            with open(self.models_info_path, 'r') as f:
+                self.models_info = json.load(f)
+        else:
+            self.models_info = {}
+            self._save_models_info()
+    
+    def _save_models_info(self):
+        with open(self.models_info_path, 'w') as f:
+            json.dump(self.models_info, f, indent=2)
+    
+    async def install_model(self, model_id: str, name: Optional[str] = None) -> dict:
+        """Install a model from Hugging Face Hub"""
+        try:
+            # Download the model
+            pipeline = StableDiffusionPipeline.from_pretrained(
+                model_id,
+                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+            )
+            
+            # Save model info
+            model_info = {
+                "name": name or model_id.split("/")[-1],
+                "source": model_id,
+                "installed_at": str(datetime.datetime.now()),
+                "status": "ready"
+            }
+            
+            self.models_info[model_id] = model_info
+            self._save_models_info()
+            
+            return model_info
+            
+        except Exception as e:
+            raise Exception(f"Failed to install model: {str(e)}")
+    
+    async def remove_model(self, model_id: str) -> bool:
+        """Remove an installed model"""
+        if model_id in self.loaded_models:
+            del self.loaded_models[model_id]
         
+        if model_id in self.models_info:
+            del self.models_info[model_id]
+            self._save_models_info()
+            return True
+        return False
+    
+    async def list_models(self) -> List[Dict]:
+        """List all installed models"""
+        return [
+            {"id": model_id, **info}
+            for model_id, info in self.models_info.items()
+        ]
+    
     async def get_pipeline(self, model_id: Optional[str] = None) -> StableDiffusionPipeline:
         model_id = model_id or self.default_model
         

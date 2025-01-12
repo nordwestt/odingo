@@ -11,3 +11,18 @@ pip install -r requirements.txt
 ## To run
 
 uvicorn src.main:app --reload
+
+## To use
+
+### List installed models
+curl http://localhost:8000/models/list
+
+### Pull a model
+curl -X POST http://localhost:8000/models/pull -d '{"url": "https://huggingface.co/CompVis/stable-diffusion-v1-4"}'
+
+### Delete a model
+curl -X DELETE http://localhost:8000/models/CompVis/stable-diffusion-v1-4
+
+### Generate an image
+curl -X POST http://localhost:8000/v1/images/generations -d '{"prompt": "A beautiful image of a cat", "n": 1, "size": "512x512", "model": "CompVis/stable-diffusion-v1-4"}'
+
