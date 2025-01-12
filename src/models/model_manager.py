@@ -13,7 +13,7 @@ class ModelManager:
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.models_info_path = self.models_dir / "models.json"
         self.loaded_models = {}
-        self.default_model = "stabilityai/stable-diffusion-2-1"
+        self.default_model = "stable-diffusion-v1-5/stable-diffusion-v1-5"
         self.enable_offload = enable_offload
         self._load_models_info()
     
@@ -101,6 +101,7 @@ class ModelManager:
         size: tuple = (512, 512),
         model_id: Optional[str] = None
     ):
+        print(f"Generating image with model {model_id}")
         pipeline = await self.get_pipeline(model_id)
         
         images = pipeline(

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from ..models.model_manager import ModelManager
 import base64
+import time
 from io import BytesIO
 
 router = APIRouter()

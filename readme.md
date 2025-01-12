@@ -24,5 +24,5 @@ curl -X POST http://localhost:8000/models/pull -d '{"url": "https://huggingface.
 curl -X DELETE http://localhost:8000/models/CompVis/stable-diffusion-v1-4
 
 ### Generate an image
-curl -X POST http://localhost:8000/v1/images/generations -d '{"prompt": "A beautiful image of a cat", "n": 1, "size": "512x512", "model": "CompVis/stable-diffusion-v1-4"}'
+curl -X POST http://localhost:8000/v1/images/generations -d '{"prompt": "A beautiful image of a cat", "n": 1, "size": "512x512", "model": "stable-diffusion-v1-5/stable-diffusion-v1-5", "response_format":"b64_json"}' --header "Content-Type: application/json"
 
