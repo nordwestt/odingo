@@ -6,6 +6,7 @@ It uses Hugging Face's diffusers library to pull models from Hugging Face's mode
 
 ## To install
 
+(maybe create venv by doing "python -m venv venv" and then doing "source venv/bin/activate")
 pip install -r requirements.txt
 
 ## To run
