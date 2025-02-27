@@ -1,4 +1,4 @@
-# ODingo - local image generation server
+# oDingo - local image generation server
 
 This is a local server for image generation, in the same way that [Ollama](https://ollama.ai/) is a local server for text generation, compliant with the OpenAI image generation API.
 
